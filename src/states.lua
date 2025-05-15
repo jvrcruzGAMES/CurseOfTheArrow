@@ -112,46 +112,40 @@ end
 g_dockstate = "idle"
 dockx = -5
 local dv = 0
-
-local lightimg = love.graphics.newImage("assets/light.png")
-local mask_shader = love.graphics.newShader[[
-   vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-      if (Texel(texture, texture_coords).rgb == vec3(0.0)) {
-         // a discarded pixel wont be applied as the stencil.
-         discard;
-      }
-      return vec4(1.0);
-   }
-]]
-
+local lightimg = love.graphics.newImage("assets/light.png") -- precisa ter transparência onde for "sem luz"
 
 lightsList = {}
 
-function addLight(x,y)
+function addLight(x, y)
   if (g_index > 59 and g_index < 101) or g_index >= 113 then
-  table.insert(lightsList,{flr(x),flr(y - 0.5)}) end
+    table.insert(lightsList, {flr(x), flr(y - 0.5)})
+  end
 end
 
+-- stencilfunc SEM shader
 local function stencilfunc()
-  love.graphics.setShader(mask_shader)
-  for k,v in pairs(lightsList) do
+  for _, v in ipairs(lightsList) do
     local s = -32
-    love.graphics.draw(lightimg,v[1] + s,v[2] + s)
+    love.graphics.draw(lightimg, v[1] + s, v[2] + s)
   end
-  love.graphics.setShader()
 end
 
 function setStencil()
+  -- Usa a imagem como máscara diretamente (sem shader)
+  -- A parte visível (alpha > 0) será registrada no stencil buffer
   love.graphics.stencil(stencilfunc, "replace", 1, true)
 end
 
 function activate()
-  love.graphics.setStencilTest("greater",0)
+  -- Ativa o uso do stencil: só desenha onde o valor do stencil buffer for maior que 0
+  love.graphics.setStencilTest("greater", 0)
 end
 
 function de_activate()
+  -- Desativa o uso do stencil
   love.graphics.setStencilTest()
 end
+
 
 function ingame.draw()
   g_calpha = t_calpa
